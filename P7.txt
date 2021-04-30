@@ -1,0 +1,12 @@
+Questão aula- LP
+Aluno- Diogo Falcão ist199199
+
+remove_pares([],[]).
+
+remove_pares([P1|R1],[P1|R2]):- 
+    impar(P1), 
+    remove_pares(R1,R2).
+
+remove_pares([P1|R1],[R2]):- 
+    par(P1),
+    remove_pares(R1,R2).
