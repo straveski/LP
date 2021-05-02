@@ -4,21 +4,8 @@
 % realizado por: Diogo Falcao
 %----------------------------
 
-%-------------------------------------------------------------------------------
-% combinacao(N, Els, Comb)
-% combinacao(N, Els, Comb) significa que Comb eh uma
-% combinacao dos elementos de Els, N a N
-%-------------------------------------------------------------------------------
-combinacao(0,_,[]).
-combinacao(N,[X|T], [X|Comb]):-
-    N > 0,
-    N1 is N-1,
-    combinacao(N1, T, Comb).
-combinacao(N, [_|T], Comb):-
-    N > 0,
-    combinacao(N, T, Comb).
-
-% CARREGAR CODIGO COMUM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+%ficheiro codigo_comum
+:- [codigo_comum].
 
 %-----------------------------------
 % 3.1.1 Predicado combinacoes_soma/4
@@ -42,9 +29,46 @@ permutacoes_soma(N,Els,Soma,Perms):-
 % 3.1.3 Predicado espaco_fila/2
 %------------------------------------
 
+%eh_lista(L):-
+%    lenght() == 2
+%    L != [0,0]
+
+sublistas([P|R],Sub):-
+    \+ var(P) -> (Aux = P, sublistas(R,Sub))
+    ;
+    append([P],Aux,Sub), sublistas(R,Sub).
+
+
+sub_espacos(Fila,H_V,espaco(Soma,L)):-
+    H_V = h,
+    sublistas(Fila,Sub),
+    %calcula o comp da lista
+    length(Sub,Ind1),
+    Ind2 is Ind1-1,
+    nth1(Ind1,Sub,Soma),
+    nth1(Ind2,Sub,Aux),
+    %vou eliminar da sublista os nuneros da soma para ficarem so as variaveis
+    subtract(Sub,[Soma,Aux],L).
+
+sub_espacos(Fila,H_V,espaco(Soma,L)):-
+    H_V = v,
+    sublistas(Fila,Sub),
+    length(Sub,Ind1),
+    Ind2 is Ind1-1,
+    nth1(Ind2,Sub,Soma),
+    nth1(Ind1,Sub,Aux),
+    subtract(Sub,[Soma,Aux],L).
+
 espaco_fila(Fila,Esp,H_V):-
+    sub_espacos(Fila,H_V,Esp).
     
+%------------------------------------
+% 3.1.4 Predicado espacos_fila/2
+%------------------------------------
 
+espacos_fila(H_V,Fila,Espacos):-
+    findall(Aux,espaco_fila(Fila,Aux,H_V),Espacos).
 
-
-
+%------------------------------------
+% 3.1.5 Predicado espacos_puzzle/2
+%------------------------------------
