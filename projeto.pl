@@ -4,7 +4,7 @@
 % realizado por: Diogo Falcao
 %----------------------------
 
-%ficheiro codigo_comum
+% ficheiro codigo_comum
 :- [codigo_comum].
 
 %-----------------------------------
@@ -28,47 +28,45 @@ permutacoes_soma(N,Els,Soma,Perms):-
 %------------------------------------
 % 3.1.3 Predicado espaco_fila/2
 %------------------------------------
+eh_pref(Pref):-
+    last(Pref,X),
+    \+ var(X).
 
-%eh_lista(L):-
-%    lenght() == 2
-%    L != [0,0]
+eh_suf(Suf):-
+    (nth1(1,Suf,X), \+ var(X)) 
+    ; 
+    Suf == [].
 
-sublistas([P|R],Sub):-
-    \+ var(P) -> (Aux = P, sublistas(R,Sub))
-    ;
-    append([P],Aux,Sub), sublistas(R,Sub).
+espaco_fila(Fila,espaco(S,Esp),H_V):-
+    H_V == h,
+    append([Pref,Esp,Suf],Fila),
+    Esp \== [],
+    eh_pref(Pref),
+    eh_suf(Suf),
+    maplist(var,Esp),
+    last(Pref,Aux),
+    nth1(2,Aux,S).
 
+espaco_fila(Fila,espaco(S,Esp),H_V):-
+    H_V == v,
+    append([Pref,Esp,Suf],Fila),
+    Esp \== [],
+    eh_pref(Pref),
+    eh_suf(Suf),
+    maplist(var,Esp),
+    last(Pref,Aux),
+    nth1(1,Aux,S).
 
-sub_espacos(Fila,H_V,espaco(Soma,L)):-
-    H_V = h,
-    sublistas(Fila,Sub),
-    %calcula o comp da lista
-    length(Sub,Ind1),
-    Ind2 is Ind1-1,
-    nth1(Ind1,Sub,Soma),
-    nth1(Ind2,Sub,Aux),
-    %vou eliminar da sublista os nuneros da soma para ficarem so as variaveis
-    subtract(Sub,[Soma,Aux],L).
-
-sub_espacos(Fila,H_V,espaco(Soma,L)):-
-    H_V = v,
-    sublistas(Fila,Sub),
-    length(Sub,Ind1),
-    Ind2 is Ind1-1,
-    nth1(Ind2,Sub,Soma),
-    nth1(Ind1,Sub,Aux),
-    subtract(Sub,[Soma,Aux],L).
-
-espaco_fila(Fila,Esp,H_V):-
-    sub_espacos(Fila,H_V,Esp).
-    
 %------------------------------------
 % 3.1.4 Predicado espacos_fila/2
 %------------------------------------
 
-espacos_fila(H_V,Fila,Espacos):-
-    findall(Aux,espaco_fila(Fila,Aux,H_V),Espacos).
-
+espacos_fila(H_V,Fila,Esps):-
+    findall(Esp,espaco_fila(Fila,Esp,H_V),Esps).
 %------------------------------------
 % 3.1.5 Predicado espacos_puzzle/2
 %------------------------------------
+    
+
+
+
