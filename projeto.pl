@@ -113,15 +113,14 @@ espacos_com_posicoes_comuns(Espacos,Esp,Esps_com):-
 %-----------------------------------------------
 
 permutacoes_soma_espacos_aux(X, Perms_soma):-
-    bagof(Perms,X^(esp_vars(X,Vars),
-        length(Vars,Quant),
-        soma(X,S),
-        permutacoes_soma(Quant,[1,2,3,4,5,6,7,8,9],S,Perms)),
-        Perms_soma). 
+    esp_vars(X,Vars),
+    length(Vars,Quant),
+    soma(X,S),
+    permutacoes_soma(Quant,[1,2,3,4,5,6,7,8,9],S,Perms_soma).
+        
 
 permutacoes_soma_espacos(Espacos, Perms_soma):-
-    bagof(Aux1,(member(X,Espacos),permutacoes_soma_espacos_aux(X,Aux),append([X],Aux,Aux1),writeln(Aux1)),Perms_soma),
-    writeln(Perms_soma).
+    bagof(Aux1,X^(member(X,Espacos),permutacoes_soma_espacos_aux(X,Aux),append([X],[Aux],Aux1)),Perms_soma).
 
     
     
@@ -134,7 +133,6 @@ permutacoes_soma_espacos(Espacos, Perms_soma):-
 % 3.1.11 Predicado numeros_comuns/2
 %-----------------------------------------------
 % usar forall
-
 
 numeros_comuns(Lst_Perms, Numeros_comuns):-
     numeros_comuns(Lst_Perms, Numeros_comuns,1).
