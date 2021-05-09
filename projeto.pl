@@ -62,11 +62,90 @@ espaco_fila(Fila,espaco(S,Esp),H_V):-
 %------------------------------------
 
 espacos_fila(H_V,Fila,Esps):-
-    findall(Esp,espaco_fila(Fila,Esp,H_V),Esps).
+    bagof(Esp,espaco_fila(Fila,Esp,H_V),Esps),!; Esps = [].
+
+espacos_fila_aux(H_V,Fila,Esps):-
+    bagof(Esp,espaco_fila(Fila,Esp,H_V),Esps).
 %------------------------------------
 % 3.1.5 Predicado espacos_puzzle/2
 %------------------------------------
+
+membro(E, [E|_]).
+membro(E, [_|R]):- membro(E, R).
+
+espacos_puzzle(Puzzle, Espacos):-
+    %Encontra os espacos horizontais
+    bagof(Esps,X^(membro(X,Puzzle), espacos_fila_aux(h,X,Esps)),Aux1),
+    mat_transposta(Puzzle,Trans),
+    % com a transposta, vai encontrar os espacos verticais
+    bagof(Esps,X^(membro(X,Trans), espacos_fila_aux(v,X,Esps)),Aux2),
+    % vai juntar todos os espacos
+    append(Aux1,Aux2,Aux),
+    flatten(Aux,Espacos).
+    
+%-----------------------------------------------
+% 3.1.6 Predicado espacos_com_posicoes_comuns/3
+%-----------------------------------------------
+soma(espaco(S,_),S).
+esp_vars(espaco(_,L),L).
+
+membro1(E, [P|_]):- P == E.
+membro1(E, [_|R]):- membro1(E, R).
+% prof usou include e uma funcao aux
+
+same(X,Y):-
+    esp_vars(Y,Aux),
+    membro1(X,Aux).
+
+espacos_com_posicoes_comuns(Espacos,Esp,Esps_com):-
+    % listas das posicoes do espacos que eu quero procurar
+    esp_vars(Esp,Aux1),
+    % vai procurar em todas as posicoes dessa lista todos os espacos 
+    % em que aparecem na lista de todos os espacos 
+    % em que essas posicoes aparecem
+    bagof(Sub_list,X^(member(X,Aux1),include(same(X),Espacos,Sub_list)),Subs),
+    flatten(Subs,Subs2),
+    % excluir o espaco em que estamos a procurar
+    subtract(Subs2,[Esp],Esps_com).
+
+%-----------------------------------------------
+% 3.1.7 Predicado permutacoes_soma_espacos/2
+%-----------------------------------------------
+
+permutacoes_soma_espacos_aux(X, Perms_soma):-
+    bagof(Perms,X^(esp_vars(X,Vars),
+        length(Vars,Quant),
+        soma(X,S),
+        permutacoes_soma(Quant,[1,2,3,4,5,6,7,8,9],S,Perms)),
+        Perms_soma). 
+
+permutacoes_soma_espacos(Espacos, Perms_soma):-
+    bagof(Aux1,(member(X,Espacos),permutacoes_soma_espacos_aux(X,Aux),append([X],Aux,Aux1),writeln(Aux1)),Perms_soma),
+    writeln(Perms_soma).
+
+    
     
 
 
 
+
+
+%-----------------------------------------------
+% 3.1.11 Predicado numeros_comuns/2
+%-----------------------------------------------
+% usar forall
+
+
+numeros_comuns(Lst_Perms, Numeros_comuns):-
+    numeros_comuns(Lst_Perms, Numeros_comuns,1).
+
+numeros_comuns(Lst_Perms,Numeros_comuns,Comp):-
+    nth1(1,Lst_Perms,Lst_aux),
+    (Comp =< length(Lst_aux,Max_comp)) ->
+        nth1(Comp,Lst_aux,Term),
+        forall(member(X,Lst_Perms),(nth1(Comp,X,Aux),Term == Aux)),
+        append([(Comp,X)],[],New_Numeros_comuns),
+        New_comp is Comp + 1,
+        numeros_comuns(Lst_perms,New_Numeros_comuns,New_comp)
+    ;
+    numeros_comuns(_,[],_).
