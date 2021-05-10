@@ -66,6 +66,7 @@ espacos_fila(H_V,Fila,Esps):-
 
 espacos_fila_aux(H_V,Fila,Esps):-
     bagof(Esp,espaco_fila(Fila,Esp,H_V),Esps).
+    
 %------------------------------------
 % 3.1.5 Predicado espacos_puzzle/2
 %------------------------------------
@@ -74,7 +75,7 @@ membro(E, [E|_]).
 membro(E, [_|R]):- membro(E, R).
 
 espacos_puzzle(Puzzle, Espacos):-
-    %Encontra os espacos horizontais
+    % Encontra os espacos horizontais
     bagof(Esps,X^(membro(X,Puzzle), espacos_fila_aux(h,X,Esps)),Aux1),
     mat_transposta(Puzzle,Trans),
     % com a transposta, vai encontrar os espacos verticais
@@ -120,10 +121,27 @@ permutacoes_soma_espacos_aux(X, Perms_soma):-
         
 
 permutacoes_soma_espacos(Espacos, Perms_soma):-
-    bagof(Aux1,X^(member(X,Espacos),permutacoes_soma_espacos_aux(X,Aux),append([X],[Aux],Aux1)),Perms_soma).
+    bagof(Aux,X^(member(X,Espacos),permutacoes_soma_espacos_aux(X,Aux)),Perms_soma_aux),
+    adiciona_espacos(Espacos,Perms_soma_aux,Perms_soma).
 
-    
-    
+adiciona_espacos([],[],[]).
+
+adiciona_espacos([P1|R1],[P2|R2],[[P1,P2]|R3]):-
+    adiciona_espacos(R1,R2,R3).
+
+%-----------------------------------------------
+% 3.1.8 Predicado permutacao_possivel_espaco/4
+%-----------------------------------------------
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -132,7 +150,7 @@ permutacoes_soma_espacos(Espacos, Perms_soma):-
 %-----------------------------------------------
 % 3.1.11 Predicado numeros_comuns/2
 %-----------------------------------------------
-% usar forall
+% usar forall ----> n devolve unificacao, so vdd ou falso 
 
 numeros_comuns(Lst_Perms, Numeros_comuns):-
     numeros_comuns(Lst_Perms, Numeros_comuns,1).
