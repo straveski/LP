@@ -104,7 +104,7 @@ espacos_com_posicoes_comuns(Espacos,Esp,Esps_com):-
     % vai procurar em todas as posicoes dessa lista todos os espacos 
     % em que aparecem na lista de todos os espacos 
     % em que essas posicoes aparecem
-    bagof(Sub_list,X^(member(X,Aux1),include(same(X),Espacos,Sub_list)),Subs),
+    bagof(Sub_list,X^(membro1(X,Aux1),include(same(X),Espacos,Sub_list)),Subs),
     flatten(Subs,Subs2),
     % excluir o espaco em que estamos a procurar
     subtract(Subs2,[Esp],Esps_com).
@@ -133,35 +133,62 @@ adiciona_espacos([P1|R1],[P2|R2],[[P1,P2]|R3]):-
 % 3.1.8 Predicado permutacao_possivel_espaco/4
 %-----------------------------------------------
 
+permutacao_possivel_espaco(Perm, Esp, Espacos, Perms_soma):-
+    espacos_com_posicoes_comuns(Espacos,Esp,Esps_com),
+    % encontra as permutacoes deste espaco
+    encontra_perms_espaco(Esp,Perms_soma,Perms_esp_1),
+    % X e uma permutacao
+    trace,
+    findall(X,(member(X,Perms_esp_1),existe_intersec(X,Esps_com,Perms_soma)),Perm_aux),
+    embeleza_final(Perm_aux,Perm).
 
+embeleza_final(Perm_aux,Perm):-
+    length(Perm_aux,Comp),
+    (Comp == 1) ->  append(Perm_aux,Perm);
+    Perm = Perm_aux.
 
+% para cada numero da perm existe uma intersec com a linha ou coluna certa
+existe_intersec(Perm,Esps_com,Perms_soma):-
+    forall(member(X,Perm),
+    (nth1(Ind,Perm,X),
+    nth1(Ind,Esps_com,Intersec),
+    encontra_perms_espaco(Intersec,Perms_soma,Perms_esp),
+    existe_intersec_numero(X,Perms_esp))).
 
+% numero esta em qualquer perm
+existe_intersec_numero(Num,Perms_esp):-
+    flatten(Perms_esp,Aux),
+    membro1(Num,Aux).
 
-
-
-
-
-
-
-
-
-
+% Esta funcao encontra as permutacoes de um espaco
+encontra_perms_espaco(Esp,Perms_soma,Perms_esp):-
+    bagof(Perms_aux,
+    X^(member(X,Perms_soma),
+    nth1(1,X,Esp),
+    nth1(2,X,Perms_aux)),
+    Perms_esp_aux),
+    append(Perms_esp_aux,Perms_esp).
 
 %-----------------------------------------------
 % 3.1.11 Predicado numeros_comuns/2
 %-----------------------------------------------
 % usar forall ----> n devolve unificacao, so vdd ou falso 
+% fazer struct pares-->(pos,numero)
 
 numeros_comuns(Lst_Perms, Numeros_comuns):-
-    numeros_comuns(Lst_Perms, Numeros_comuns,1).
+    nth1(1,Lst_Perms,Lst_aux),
+    length(Lst_aux,Comp),
+    numeros_comuns(Lst_Perms,Numeros_comuns,Comp).
+
+numeros_comuns(_,[],0).
 
 numeros_comuns(Lst_Perms,Numeros_comuns,Comp):-
     nth1(1,Lst_Perms,Lst_aux),
-    (Comp =< length(Lst_aux,Max_comp)) ->
-        nth1(Comp,Lst_aux,Term),
-        forall(member(X,Lst_Perms),(nth1(Comp,X,Aux),Term == Aux)),
-        append([(Comp,X)],[],New_Numeros_comuns),
-        New_comp is Comp + 1,
-        numeros_comuns(Lst_perms,New_Numeros_comuns,New_comp)
-    ;
-    numeros_comuns(_,[],_).
+    nth1(Comp,Lst_aux,Term),
+    forall(member(X,Lst_Perms),(nth1(Comp,X,Aux),Term == Aux))->
+        (append([(Comp,Term)],Numeros_comuns,New_Numeros_comuns),
+        New_comp is Comp - 1,
+        numeros_comuns(Lst_Perms,New_Numeros_comuns,New_comp))
+        ;
+        (New_comp is Comp - 1,
+        numeros_comuns(Lst_Perms,Numeros_comuns,New_comp)).
