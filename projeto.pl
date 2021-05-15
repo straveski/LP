@@ -1,18 +1,15 @@
 %----------------------------
 %         PROJETO LP
-%----------------------------
 % realizado por: Diogo Falcao
 %----------------------------
-
-% ficheiro codigo_comum
+% ficheiros
 :- [codigo_comum].
-
+:- [puzzles_publicos].
 %-----------------------------------
 % 3.1.1 Predicado combinacoes_soma/4
 %-----------------------------------
 
 combinacoes_soma(N,Els,Soma,Combs):- findall(Comb,(combinacao(N,Els,Comb), sum_list(Comb,Soma)),Combs).
-
 
 %-----------------------------------
 % 3.1.2 Predicado permutacoes_soma/4
@@ -92,11 +89,20 @@ esp_vars(espaco(_,L),L).
 
 membro1(E, [P|_]):- P == E.
 membro1(E, [_|R]):- membro1(E, R).
-% prof usou include e uma funcao aux
 
 same(X,Y):-
     esp_vars(Y,Aux),
     membro1(X,Aux).
+
+% elimina sem unificar as variaveis
+elimina(_, [], []):- !.
+elimina(X, [X1|Xs], Ys) :- 
+    X == X1,
+    !,
+    elimina(X, Xs, Ys).
+elimina(X, [X1|Xs], [X1|Ys]) :- 
+    X \== X1, 
+    elimina(X, Xs, Ys).
 
 espacos_com_posicoes_comuns(Espacos,Esp,Esps_com):-
     % listas das posicoes do espacos que eu quero procurar
@@ -104,10 +110,10 @@ espacos_com_posicoes_comuns(Espacos,Esp,Esps_com):-
     % vai procurar em todas as posicoes dessa lista todos os espacos 
     % em que aparecem na lista de todos os espacos 
     % em que essas posicoes aparecem
-    bagof(Sub_list,X^(membro1(X,Aux1),include(same(X),Espacos,Sub_list)),Subs),
+    bagof(Sub_list,X^(member(X,Aux1),include(same(X),Espacos,Sub_list)),Subs),
     flatten(Subs,Subs2),
+    elimina(Esp,Subs2,Esps_com).
     % excluir o espaco em que estamos a procurar
-    subtract(Subs2,[Esp],Esps_com).
 
 %-----------------------------------------------
 % 3.1.7 Predicado permutacoes_soma_espacos/2
@@ -138,57 +144,127 @@ permutacao_possivel_espaco(Perm, Esp, Espacos, Perms_soma):-
     % encontra as permutacoes deste espaco
     encontra_perms_espaco(Esp,Perms_soma,Perms_esp_1),
     % X e uma permutacao
-    trace,
     findall(X,(member(X,Perms_esp_1),existe_intersec(X,Esps_com,Perms_soma)),Perm_aux),
-    embeleza_final(Perm_aux,Perm).
-
-embeleza_final(Perm_aux,Perm):-
-    length(Perm_aux,Comp),
-    (Comp == 1) ->  append(Perm_aux,Perm);
-    Perm = Perm_aux.
+    member(Perm,Perm_aux).
 
 % para cada numero da perm existe uma intersec com a linha ou coluna certa
 existe_intersec(Perm,Esps_com,Perms_soma):-
-    forall(member(X,Perm),
-    (nth1(Ind,Perm,X),
-    nth1(Ind,Esps_com,Intersec),
-    encontra_perms_espaco(Intersec,Perms_soma,Perms_esp),
-    existe_intersec_numero(X,Perms_esp))).
+    forall(member(X,Perm),(nth1(Ind,Perm,X),nth1(Ind,Esps_com,Intersec),encontra_perms_espaco(Intersec,Perms_soma,Perms_esp),existe_intersec_numero(X,Perms_esp),!)).
 
 % numero esta em qualquer perm
-existe_intersec_numero(Num,Perms_esp):-
-    flatten(Perms_esp,Aux),
-    membro1(Num,Aux).
+existe_intersec_numero(Num,Perms_esp):- flatten(Perms_esp,Aux), membro1(Num,Aux).
 
 % Esta funcao encontra as permutacoes de um espaco
 encontra_perms_espaco(Esp,Perms_soma,Perms_esp):-
-    bagof(Perms_aux,
-    X^(member(X,Perms_soma),
-    nth1(1,X,Esp),
-    nth1(2,X,Perms_aux)),
-    Perms_esp_aux),
-    append(Perms_esp_aux,Perms_esp).
+    findall(Perms_aux,(member(X,Perms_soma),nth1(1,X,Esp),!,nth1(2,X,Perms_aux)),Perms_esp_aux),
+    Perms_esp_aux \== [] -> append(Perms_esp_aux,Perms_esp);Perms_esp = [].
+
+%-----------------------------------------------
+% 3.1.9 Predicado permutacoes_possiveis_espaco/4
+%-----------------------------------------------
+permutacoes_possiveis_espaco(Espacos, Perms_soma, Esp,Perms_poss):-
+    espacos_com_posicoes_comuns(Espacos,Esp,Esps_com),
+    % encontra as permutacoes deste espaco
+    encontra_perms_espaco(Esp,Perms_soma,Perms_esp_1),
+    % X e uma permutacao
+    findall(X,(member(X,Perms_esp_1),existe_intersec(X,Esps_com,Perms_soma)),Perm_aux),
+    esp_vars(Esp,Vars),
+    append([Vars],[Perm_aux],Perms_poss).
+
+
+%-------------------------------------------------
+% 3.1.10 Predicado permutacoes_possiveis_espacos/2
+%-------------------------------------------------
+permutacoes_possiveis_espacos(Espacos, Perms_poss_esps):-
+    permutacoes_soma_espacos(Espacos, Perms_soma),
+    bagof(Perms_poss,X^(member(X,Espacos),
+    permutacoes_possiveis_espaco(Espacos, Perms_soma,X,Perms_poss)),
+    Perms_poss_esps),!.
 
 %-----------------------------------------------
 % 3.1.11 Predicado numeros_comuns/2
 %-----------------------------------------------
-% usar forall ----> n devolve unificacao, so vdd ou falso 
-% fazer struct pares-->(pos,numero)
-
 numeros_comuns(Lst_Perms, Numeros_comuns):-
-    nth1(1,Lst_Perms,Lst_aux),
-    length(Lst_aux,Comp),
-    numeros_comuns(Lst_Perms,Numeros_comuns,Comp).
+    nth1(1,Lst_Perms,P_perm),
+    length(P_perm,Comp),
+    numlist(1,Comp,L_indices),
+    bagof(X,X^Y^(member(X,L_indices),forall(member(L,Lst_Perms),(nth1(X,P_perm,Aux),nth1(X,L,Y),Aux == Y))),Indices_comuns),
+    bagof(Y,X^(member(X,Indices_comuns),nth1(X,P_perm,Y)),Num_com),
+    junta_pares(Indices_comuns,Num_com,Numeros_comuns),!;Numeros_comuns = [].
 
-numeros_comuns(_,[],0).
 
-numeros_comuns(Lst_Perms,Numeros_comuns,Comp):-
-    nth1(1,Lst_Perms,Lst_aux),
-    nth1(Comp,Lst_aux,Term),
-    forall(member(X,Lst_Perms),(nth1(Comp,X,Aux),Term == Aux))->
-        (append([(Comp,Term)],Numeros_comuns,New_Numeros_comuns),
-        New_comp is Comp - 1,
-        numeros_comuns(Lst_Perms,New_Numeros_comuns,New_comp))
-        ;
-        (New_comp is Comp - 1,
-        numeros_comuns(Lst_Perms,Numeros_comuns,New_comp)).
+junta_pares([],[],[]).
+junta_pares([P1|R1],[P2|R2],[(P1,P2)|R3]):-
+    junta_pares(R1,R2,R3).
+
+%-----------------------------------------------
+% 3.1.12    Predicadoatribui_comuns/1
+%-----------------------------------------------
+atribui_comuns(Perms_Possiveis):-
+    maplist(unifica,Perms_Possiveis).
+
+unifica(X):-
+    nth1(2,X,Perms),
+    numeros_comuns(Perms,Comuns),
+    nth1(1,X,Vars),
+    Comuns \== []-> maplist(unifica_var(Vars),Comuns);
+    !.
+
+unifica_var(Y,(Ind,Number)):-
+    nth1(Ind,Y,Number).
+    
+%-----------------------------------------------
+% 3.1.13 Predicado retira_impossiveis/2
+%-----------------------------------------------
+retira_impossiveis(Perms_Possiveis, Novas_Perms_Possiveis):-
+    % percorremos as perm_possiveis e vamos a cada uma delas e verificamos se tem ou nao 
+    % ja unificacao e eliminamos as permutacoes que tenham um numero diferente nessa posicao
+    bagof(Possivel,X^(member(X,Perms_Possiveis),
+    retira_imp_aux2(X,Possivel)),
+    Novas_Perms_Possiveis).
+
+retira_imp_aux2(X,Possivel):-
+    nth1(1,X,Vars),
+    nth1(2,X,Perms),
+    encontra_uni(Vars,Posicoes),
+    retira_imp_aux(Perms,Posicoes,S_pos),
+    append([Vars],[S_pos],Possivel).
+
+encontra_uni(Vars,Posicoes):-
+    encontra_uni(Vars,Posicoes,1).
+encontra_uni([],[],_).
+encontra_uni([P1|R1],[(Aux,P1)|R2],Aux):-
+    \+var(P1),
+    !,
+    New_aux is Aux+1,
+    encontra_uni(R1,R2,New_aux).
+encontra_uni([_|R1],R2,Aux):-
+    New_aux is Aux+1,
+    encontra_uni(R1,R2,New_aux).
+
+retira_imp_aux(Perms,Posicoes,S_pos):-
+    include(inclui_pos(Posicoes),Perms,S_pos).
+
+inclui_pos(Posicoes,X):-
+    forall(member((I,N),Posicoes),nth1(I,X,N)).
+
+%-----------------------------------------------
+% 3.1.14 Predicado simplifica/2
+%-----------------------------------------------
+
+simplifica(Perms_Possiveis, Novas_Perms_Possiveis):-
+    simplifica(Perms_Possiveis,[], Novas_Perms_Possiveis).
+
+simplifica(Aux,Aux, Aux).
+
+simplifica(Perms_Possiveis,Aux, Novas_Perms_Possiveis):-
+    Perms_Possiveis \== Aux,
+    atribui_comuns(Perms_Possiveis),
+    retira_impossiveis(Perms_Possiveis, Aux),
+    simplifica(Aux,Aux,Novas_Perms_Possiveis).
+
+
+
+
+
+    
