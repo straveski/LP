@@ -159,6 +159,7 @@ encontra_perms_espaco(Esp,Perms_soma,Perms_esp):-
     findall(Perms_aux,(member(X,Perms_soma),nth1(1,X,Esp),!,nth1(2,X,Perms_aux)),Perms_esp_aux),
     Perms_esp_aux \== [] -> append(Perms_esp_aux,Perms_esp);Perms_esp = [].
 
+
 %-----------------------------------------------
 % 3.1.9 Predicado permutacoes_possiveis_espaco/4
 %-----------------------------------------------
@@ -198,7 +199,7 @@ junta_pares([P1|R1],[P2|R2],[(P1,P2)|R3]):-
     junta_pares(R1,R2,R3).
 
 %-----------------------------------------------
-% 3.1.12    Predicadoatribui_comuns/1
+% 3.1.12    Predicado atribui_comuns/1
 %-----------------------------------------------
 atribui_comuns(Perms_Possiveis):-
     maplist(unifica,Perms_Possiveis).
@@ -251,20 +252,104 @@ inclui_pos(Posicoes,X):-
 %-----------------------------------------------
 % 3.1.14 Predicado simplifica/2
 %-----------------------------------------------
-
 simplifica(Perms_Possiveis, Novas_Perms_Possiveis):-
-    simplifica(Perms_Possiveis,[], Novas_Perms_Possiveis).
-
-simplifica(Aux,Aux, Aux).
-
-simplifica(Perms_Possiveis,Aux, Novas_Perms_Possiveis):-
-    Perms_Possiveis \== Aux,
     atribui_comuns(Perms_Possiveis),
-    retira_impossiveis(Perms_Possiveis, Aux),
-    simplifica(Aux,Aux,Novas_Perms_Possiveis).
-
-
-
-
-
+    retira_impossiveis(Perms_Possiveis, Aux1),
+    Aux1 \== Perms_Possiveis,
+    !,
+    simplifica(Aux1,Novas_Perms_Possiveis). 
     
+simplifica(Perms_Possiveis, Novas_Perms_Possiveis):-
+    atribui_comuns(Perms_Possiveis),
+    retira_impossiveis(Perms_Possiveis, Aux1),
+    Novas_Perms_Possiveis = Aux1.
+
+%-----------------------------------------------
+% 3.1.15 Predicado inicializa/2
+%----------------------------------------------- 
+inicializa(Puzzle, Perms_Possiveis):-
+    espacos_puzzle(Puzzle, Espacos),
+    permutacoes_possiveis_espacos(Espacos, Aux),
+    simplifica(Aux, Perms_Possiveis).
+
+%-----------------------------------------------
+% 3.2.1 Predicado escolhe_menos_alternativas/2
+%----------------------------------------------- 
+
+% fazer lista de tamanhos das perms
+% ver qual o menor sem ser 1
+% achar o indice
+% retornar
+% caso de ser false, ou seja, lista de legths 1's
+
+escolhe_menos_alternativas(Perms_Possiveis, Escolha):-
+    findall(Comps,(member(X,Perms_Possiveis),nth1(2,X,Perms),length(Perms,Comps)),Escolha),
+    forall(member(X,Escolha),X\==1).
+
+escolhe_menos_alternativas(Perms_Possiveis, Escolha):-
+    findall(Comps,(member(X,Perms_Possiveis),nth1(2,X,Perms),length(Perms,Comps)),L_comps),
+    exclude(=(1),L_comps,L_comps_s_1),
+    min_list(L_comps_s_1,Min),
+    nth1(Ind,L_comps_s_1,Min),
+    !,
+    nth1(Ind,Perms_Possiveis,Escolha).
+
+%-----------------------------------------------
+% 3.2.2 Predicado experimenta_perm/3
+%----------------------------------------------- 
+experimenta_perm(Escolha, Perms_Possiveis,Novas_Perms_Possiveis):-
+    nth1(1,Escolha,Esp),
+    nth1(2,Escolha,Lst_Perms),
+    member(Perm,Lst_Perms),
+    !,
+    Esp = Perm,
+    select(Escolha,Perms_Possiveis,[Esp, [Perm]],Novas_Perms_Possiveis).
+
+%-----------------------------------------------
+% 3.2.3 Predicado resolve_aux/2
+%----------------------------------------------- 
+% forall(member(X,Aux),(nth1(2,X,Perms),length(Perms,1))),
+resolve_aux(Perms_Possiveis, Novas_Perms_Possiveis):-
+    escolhe_menos_alternativas(Perms_Possiveis, Escolha),
+    experimenta_perm(Escolha, Perms_Possiveis,Aux),
+    % verificar se caso de paragem (quando so ha uma perm pos)
+    findall(Comp,(member(X,Aux),nth1(2,X,Perms),length(Perms,Comp)),L_comps),
+    exclude(=(1),L_comps,L_comps_s_1),
+    length(L_comps_s_1,Comp_aux),
+    Comp_aux >= 1,
+    !,
+    simplifica(Aux,Aux1),
+    resolve_aux(Aux1, Novas_Perms_Possiveis).
+
+resolve_aux(Perms_Possiveis, Novas_Perms_Possiveis):-
+    escolhe_menos_alternativas(Perms_Possiveis, Escolha),
+    experimenta_perm(Escolha, Perms_Possiveis,Aux1),
+    simplifica(Aux1, Aux),
+    Novas_Perms_Possiveis = Aux.
+
+%-----------------------------------------------
+% 3.3.1 Predicado resolve/1
+%----------------------------------------------- 
+resolve(Puz):-
+    inicializa(Puz, Perms_Possiveis),
+    resolve_aux(Perms_Possiveis,Puz).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
