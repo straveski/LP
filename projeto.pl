@@ -333,23 +333,3 @@ resolve_aux(Perms_Possiveis, Novas_Perms_Possiveis):-
 resolve(Puz):-
     inicializa(Puz, Perms_Possiveis),
     resolve_aux(Perms_Possiveis,Puz).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
